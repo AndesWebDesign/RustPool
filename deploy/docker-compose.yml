@@ -1,0 +1,63 @@
+version: "3.7"
+services:
+#  rustpool:
+#    container_name: rustpool
+#    restart: unless-stopped
+#    image: rustpool
+#    build:
+#      context: ../
+#      dockerfile: deploy/Dockerfile
+#      target: rustpool
+##    volumes:
+##      - /media/ale/STORAGE/rustpool:/etc/rustpool:ro
+#  rustpool-db:
+#    image: postgres
+#    restart: unless-stopped
+#    volumes:
+#      - /media/ale/STORAGE/rustpool_data:/var/lib/postgresql/data
+#    environment:
+#      - POSTGRES_DB=rustpool
+#      - POSTGRES_USER=postgres
+#      - POSTGRES_PASSWORD=ewgbueyfeskrufbhesurbfusergbfusegrfubegrfubsuerfuvebfurgufgbrkie
+  monero-daemon:
+    container_name: monero-daemon
+    restart: unless-stopped
+    image: monero-daemon
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+      target: monero-daemon
+    ports:
+      - "18081:18081"
+    environment:
+      - MONERO_DAEMON_RPC_USER=monero
+      - MONERO_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
+    volumes:
+      - /media/ale/STORAGE/monero_data:/monero_data
+  monero-wallet:
+    container_name: monero-wallet
+    restart: unless-stopped
+    image: monero-wallet
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+      target: monero-wallet
+    ports:
+      - "18082:18082"
+    environment:
+      - MONERO_DAEMON_RPC_USER=monero
+      - MONERO_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
+      - MONERO_WALLET_RPC_USER=monero
+      - MONERO_WALLET_RPC_PASSWORD=esiursieuuysitsieursleiurloifclnjvlivlininlosiedthrhdthdrthdrthr
+      - POOL_WALLET_PASSWORD=esiursieuuysitsieursleiurloifclnjvlivlininlosiedthrhdthdrthdrthr
+    volumes:
+      - /media/ale/STORAGE/wallet_data:/wallet_data
+#volumes:
+#  rustpool:
+#    external: true
+#  rustpool_data:
+#    external: true
+#  monero_data:
+#    external: true
+#  wallet_data:
+#    external: true
