@@ -3,4 +3,5 @@ target
 rustpool.iml
 ignored
 docs/_build
+Cargo.lock
 !**/.gitkeep
