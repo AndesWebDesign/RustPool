@@ -8,13 +8,13 @@ services:
 #      context: ../
 #      dockerfile: deploy/Dockerfile
 #      target: rustpool
-##    volumes:
-##      - /media/ale/STORAGE/rustpool:/etc/rustpool:ro
+#    volumes:
+#      - /media/ale/STORAGE/rustpool:/etc/rustpool:ro
 #  rustpool-db:
 #    image: postgres
 #    restart: unless-stopped
 #    volumes:
-#      - /media/ale/STORAGE/rustpool_data:/var/lib/postgresql/data
+#      - /media/ale/STORAGE/rustpool_db:/var/lib/postgresql/data
 #    environment:
 #      - POSTGRES_DB=rustpool
 #      - POSTGRES_USER=postgres

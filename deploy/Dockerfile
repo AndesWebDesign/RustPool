@@ -52,6 +52,8 @@ RUN apt-get update \
 
 VOLUME /etc/rustpool
 
+EXPOSE 443
+
 ENTRYPOINT ["rustpool_entrypoint.sh"]
 
 
