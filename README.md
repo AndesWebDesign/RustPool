@@ -7,4 +7,4 @@ A Monero mining pool server written in Rust.
 
 Documentation: [Read The Docs](https://rustpool.readthedocs.io/en/latest).
 
-License: [MIT](https://github.com/AndesWebDesign/RustPool/LICENSE.md).
+License: [MIT](https://github.com/AndesWebDesign/RustPool/blob/main/README.md).
