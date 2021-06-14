@@ -2,9 +2,9 @@ use std::str::{from_utf8, FromStr};
 
 use digest_auth::{AuthContext, AuthorizationHeader, Error, WwwAuthenticateHeader};
 use log::{debug, info, warn};
-use reqwest::{Client, Response, StatusCode};
+use reqwest::{Body, Client, Response, StatusCode};
 use reqwest::header::HeaderName;
-use serde_json::{from_str, from_value, json, Value, Map};
+use serde_json::{from_str, from_value, json, Map, Value};
 
 use crate::config::magic::{AUTH_HEADER_NAME, JSON_RPC_VERSION, MISSING_STRING, WWW_AUTH_HEADER_NAME};
 use crate::structs::{BlockTemplate, Config, PayoutDTO, TransferResponse};
@@ -29,6 +29,7 @@ fn parse_www_auth_header(response: Response, context: AuthContext) -> Option<Aut
     let resp_headers = response.headers();
     println!("{:?}", resp_headers);
     if !resp_headers.contains_key(WWW_AUTH_HEADER_NAME) {
+        info!("response headers do not contain {} header", WWW_AUTH_HEADER_NAME);
         return None;
     }
     let www_auth_header = resp_headers.get(WWW_AUTH_HEADER_NAME).unwrap();
@@ -39,11 +40,13 @@ fn parse_www_auth_header(response: Response, context: AuthContext) -> Option<Aut
                     return Some(auth_header);
                 }
                 Err(_) => {
+                    info!("could not make new authorization header");
                     return None;
                 }
             }
         }
         Err(_) => {
+            info!("could not parse {} header from response", WWW_AUTH_HEADER_NAME);
             return None;
         }
     }
@@ -55,28 +58,32 @@ async fn make_rpc_request(body: &Value,
                           password: &String,
                           auth_header: Option<AuthorizationHeader>) -> Option<Value> {
     let client = Client::new();
-    let mut builder = client.post(uri)
-        .body(body.to_string());
-    if !auth_header.is_none() {
+    let mut builder = client.post(uri).body(Body::from(body.to_string()));
+    if auth_header.is_some() {
         builder = builder.header(AUTH_HEADER_NAME, auth_header.unwrap())
     }
     let result = builder.send().await;
-    if result.is_ok() {
-        let response = result.ok().unwrap();
-        if response.status() == StatusCode::OK {
+    if result.is_err() {
+        info!("RPC call failed with error: {}", result.err().unwrap().to_string());
+        return None;
+    }
+    let response = result.ok().unwrap();
+    match response.status() {
+        StatusCode::OK => {
             let resp_str = from_utf8(response.bytes().as_bytes()).unwrap_or(MISSING_STRING);
             if resp_str.eq(MISSING_STRING) || resp_str.is_empty() {
-                info!("could not parse RPC response");
+                info!("could not parse RPC response bytes to string");
                 return None;
             }
             let default = json!(MISSING_STRING);
             let parsed_val = serde_json::from_str(resp_str).unwrap_or(default);
             if parsed_val.as_str().unwrap_or(MISSING_STRING).eq(MISSING_STRING) {
-                info!("could not parse RPC response");
+                info!("could not parse RPC response string to value");
                 return None;
             }
             return Some(parsed_val);
-        } else if response.status() == StatusCode::UNAUTHORIZED {
+        }
+        StatusCode::UNAUTHORIZED => {
             if auth_header.is_some() {
                 info!("already had one unauthorized RPC response");
                 return None;
@@ -87,16 +94,16 @@ async fn make_rpc_request(body: &Value,
                     return make_rpc_request(body, uri, username, password, Some(auth_header));
                 }
                 None => {
+                    info!("could not parse {} header", WWW_AUTH_HEADER_NAME);
                     return None;
                 }
             }
-        } else {
-            info!("could not make RPC request");
+        }
+        _ => {
+            info!("could not make RPC request, status code: {} - {}",
+                  response.status().as_u16(), response.status().as_str());
             return None;
         }
-    } else {
-        info!("RPC call failed with error: {}", result.err().unwrap().to_string());
-        return None;
     }
 }
 
