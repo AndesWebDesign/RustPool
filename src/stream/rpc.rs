@@ -1,10 +1,10 @@
-use std::str::{from_utf8, FromStr};
+use std::str::{from_utf8};
+use async_recursion::async_recursion;
 
-use digest_auth::{AuthContext, AuthorizationHeader, Error, WwwAuthenticateHeader};
-use log::{debug, info, warn};
+use digest_auth::{AuthContext, AuthorizationHeader};
+use log::{error, info, warn};
 use reqwest::{Body, Client, Response, StatusCode};
-use reqwest::header::HeaderName;
-use serde_json::{from_str, from_value, json, Map, Value};
+use serde_json::{from_value, json, Value};
 
 use crate::config::magic::{AUTH_HEADER_NAME, JSON_RPC_VERSION, MISSING_STRING, WWW_AUTH_HEADER_NAME};
 use crate::structs::{BlockTemplate, Config, PayoutDTO, TransferResponse};
@@ -52,15 +52,17 @@ fn parse_www_auth_header(response: Response, context: AuthContext) -> Option<Aut
     }
 }
 
+#[async_recursion]
 async fn make_rpc_request(body: &Value,
                           uri: &String,
                           username: &String,
                           password: &String,
                           auth_header: Option<AuthorizationHeader>) -> Option<Value> {
+    let header_present = auth_header.is_some();
     let client = Client::new();
     let mut builder = client.post(uri).body(Body::from(body.to_string()));
-    if auth_header.is_some() {
-        builder = builder.header(AUTH_HEADER_NAME, auth_header.unwrap())
+    if header_present {
+        builder = builder.header(AUTH_HEADER_NAME, auth_header.unwrap().to_header_string())
     }
     let result = builder.send().await;
     if result.is_err() {
@@ -70,7 +72,14 @@ async fn make_rpc_request(body: &Value,
     let response = result.ok().unwrap();
     match response.status() {
         StatusCode::OK => {
-            let resp_str = from_utf8(response.bytes().as_bytes()).unwrap_or(MISSING_STRING);
+            let resp_bytes = response.bytes().await;
+            if resp_bytes.is_err() {
+                info!("could not parse RPC response bytes, got error {}",
+                      resp_bytes.err().unwrap().to_string());
+                return None;
+            }
+            let bytes_vec = resp_bytes.unwrap().to_vec();
+            let resp_str = from_utf8(bytes_vec.as_slice()).unwrap_or(MISSING_STRING);
             if resp_str.eq(MISSING_STRING) || resp_str.is_empty() {
                 info!("could not parse RPC response bytes to string");
                 return None;
@@ -84,14 +93,16 @@ async fn make_rpc_request(body: &Value,
             return Some(parsed_val);
         }
         StatusCode::UNAUTHORIZED => {
-            if auth_header.is_some() {
+            if header_present {
                 info!("already had one unauthorized RPC response");
                 return None;
             }
-            let mut context = AuthContext::new_post(username, password, uri, Some(body));
+            let body_str = body.to_string();
+            let body_opt = Some(body_str.as_bytes());
+            let context = AuthContext::new_post(username, password, uri, body_opt);
             match parse_www_auth_header(response, context) {
                 Some(auth_header) => {
-                    return make_rpc_request(body, uri, username, password, Some(auth_header));
+                    return make_rpc_request(body, uri, username, password, Some(auth_header)).await;
                 }
                 None => {
                     info!("could not parse {} header", WWW_AUTH_HEADER_NAME);
@@ -152,7 +163,7 @@ pub async fn get_unlocked_balance(config: &Config) -> Option<u64> {
     });
     let req_result = make_wallet_rpc_request(config, &body).await;
     if req_result.is_none() {
-        info!("could not get RPC balance result");
+        error!("could not get RPC balance result");
         return None;
     }
     let balance_response = req_result.unwrap();
