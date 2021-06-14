@@ -9,7 +9,11 @@ use crate::config::magic::{MISSING_STRING, WALLET_MAX_SIZE};
 pub struct Config {
     pub threads: u8,
     pub daemon_rpc_url: String,
+    pub daemon_rpc_user: String,
+    pub daemon_rpc_password: String,
     pub wallet_rpc_url: String,
+    pub wallet_rpc_user: String,
+    pub wallet_rpc_password: String,
     pub block_notify_host: String,
     pub block_notify_port: u16,
     pub rpc_timeout_seconds: u8,

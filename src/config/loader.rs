@@ -31,8 +31,16 @@ fn load_environment_overrides(mut config: Config) -> Config {
     // String
     config.daemon_rpc_url = env_config.get("daemon_rpc_url")
         .unwrap_or(config.daemon_rpc_url).to_string();
+    config.daemon_rpc_user = env_config.get("daemon_rpc_user")
+        .unwrap_or(config.daemon_rpc_user).to_string();
+    config.daemon_rpc_password = env_config.get("daemon_rpc_password")
+        .unwrap_or(config.daemon_rpc_password).to_string();
     config.wallet_rpc_url = env_config.get("wallet_rpc_url")
         .unwrap_or(config.wallet_rpc_url).to_string();
+    config.wallet_rpc_user = env_config.get("wallet_rpc_user")
+        .unwrap_or(config.wallet_rpc_user).to_string();
+    config.wallet_rpc_password = env_config.get("wallet_rpc_password")
+        .unwrap_or(config.wallet_rpc_password).to_string();
     config.block_notify_host = env_config.get("block_notify_host")
         .unwrap_or(config.block_notify_host).to_string();
     config.wallet = env_config.get("wallet")

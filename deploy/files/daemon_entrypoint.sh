@@ -2,7 +2,7 @@
 printf "starting daemon as user %s\n" "${MONERO_USER:=monero_user}"
 chown -R "${MONERO_USER}":"${MONERO_USER}" /monero_data
 DNS_PUBLIC=tcp gosu "${MONERO_USER}" monerod \
-  --rpc-login "${MONERO_DAEMON_RPC_USER:?UNSET}:${MONERO_DAEMON_RPC_PASSWORD:?UNSET}" \
+  --rpc-login "${RUSTPOOL_DAEMON_RPC_USER:?UNSET}:${RUSTPOOL_DAEMON_RPC_PASSWORD:?UNSET}" \
   --non-interactive \
   --block-notify "/bin/bash /block_notify.sh" \
   --data-dir /monero_data \

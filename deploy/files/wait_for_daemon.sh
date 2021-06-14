@@ -1,7 +1,7 @@
 #!/bin/bash
 daemon_synced() {
   if STATUS_CHECK=$(curl -s \
-    -u "${MONERO_DAEMON_RPC_USER:?UNSET}:${MONERO_DAEMON_RPC_PASSWORD:?UNSET}" --digest \
+    -u "${RUSTPOOL_DAEMON_RPC_USER:?UNSET}:${RUSTPOOL_DAEMON_RPC_PASSWORD:?UNSET}" --digest \
     -X POST \
     http://monero-daemon:18081/json_rpc \
     -d '{"jsonrpc":"2.0","id":"0","method":"sync_info"}' \

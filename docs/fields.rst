@@ -34,7 +34,13 @@ convenience, the following should be adhered to:
     The port to listen to for block notifications. This may be set to ``0`` to accept notifications from all ports.
 
 **daemon_rpc_url** - str
-    The full url to connect to the Monero RPC at.
+    The full url to connect to the daemon RPC at.
+
+**daemon_rpc_user** - str
+    The user to connect to the daemon RPC as.
+
+**daemon_rpc_password** - str
+    The password to connect to the daemon RPC with.
 
 **database_connect_timeout_seconds** - u8
     The database connection timeout in seconds.
@@ -150,6 +156,12 @@ convenience, the following should be adhered to:
     The pool wallet address.
 
 **wallet_rpc_url** - str
-    The full url to connect to the Monero wallet RPC at.
+    The full url to connect to the wallet RPC at.
+
+**wallet_rpc_user** - str
+    The user to connect to the wallet RPC as.
+
+**wallet_rpc_password** - str
+    The password to connect to the wallet RPC with.
 
 

@@ -1,24 +1,33 @@
 version: "3.7"
 services:
-#  rustpool:
-#    container_name: rustpool
-#    restart: unless-stopped
-#    image: rustpool
-#    build:
-#      context: ../
-#      dockerfile: deploy/Dockerfile
-#      target: rustpool
-#    volumes:
-#      - /media/ale/STORAGE/rustpool:/etc/rustpool:ro
-#  rustpool-db:
-#    image: postgres
-#    restart: unless-stopped
-#    volumes:
-#      - /media/ale/STORAGE/rustpool_db:/var/lib/postgresql/data
-#    environment:
-#      - POSTGRES_DB=rustpool
-#      - POSTGRES_USER=postgres
-#      - POSTGRES_PASSWORD=ewgbueyfeskrufbhesurbfusergbfusegrfubegrfubsuerfuvebfurgufgbrkie
+  rustpool:
+    container_name: rustpool
+    restart: unless-stopped
+    image: rustpool
+    build:
+      context: ../
+      dockerfile: deploy/Dockerfile
+      target: rustpool
+    volumes:
+      - /media/ale/STORAGE/rustpool:/etc/rustpool
+    ports:
+      - "443:443"
+      - "18083:18083"
+    environment:
+      - RUSTPOOL_DAEMON_RPC_USER=monero
+      - RUSTPOOL_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
+  rustpool-db:
+    container_name: rustpool-db
+    image: postgres
+    restart: unless-stopped
+    volumes:
+      - /media/ale/STORAGE/rustpool_db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=rustpool
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=ewgbueyfeskrufbhesurbfusergbfusegrfubegrfubsuerfuvebfurgufgbrkie
   monero-daemon:
     container_name: monero-daemon
     restart: unless-stopped
@@ -30,8 +39,8 @@ services:
     ports:
       - "18081:18081"
     environment:
-      - MONERO_DAEMON_RPC_USER=monero
-      - MONERO_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
+      - RUSTPOOL_DAEMON_RPC_USER=monero
+      - RUSTPOOL_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
     volumes:
       - /media/ale/STORAGE/monero_data:/monero_data
   monero-wallet:
@@ -45,10 +54,10 @@ services:
     ports:
       - "18082:18082"
     environment:
-      - MONERO_DAEMON_RPC_USER=monero
-      - MONERO_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
-      - MONERO_WALLET_RPC_USER=monero
-      - MONERO_WALLET_RPC_PASSWORD=esiursieuuysitsieursleiurloifclnjvlivlininlosiedthrhdthdrthdrthr
+      - RUSTPOOL_DAEMON_RPC_USER=monero
+      - RUSTPOOL_DAEMON_RPC_PASSWORD=iiugsreiukserkiruegksurhgiurehihsikguhkshgahukaxdifugsrhsdfgserl
+      - RUSTPOOL_WALLET_RPC_USER=monero
+      - RUSTPOOL_WALLET_RPC_PASSWORD=esiursieuuysitsieursleiurloifclnjvlivlininlosiedthrhdthdrthdrthr
       - POOL_WALLET_PASSWORD=esiursieuuysitsieursleiurloifclnjvlivlininlosiedthrhdthdrthdrthr
     volumes:
       - /media/ale/STORAGE/wallet_data:/wallet_data

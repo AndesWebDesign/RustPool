@@ -1,56 +1,45 @@
-use hyper::{Body, Client, Method, Request, StatusCode};
-use hyper::body::to_bytes;
 use log::{info, warn};
 use serde_json::{from_str, from_value, json, Value};
-
+use digest_auth::AuthContext;
+use reqwest::{Client, StatusCode, Response};
 use crate::config::magic::{JSON_RPC_VERSION, MISSING_STRING};
 use crate::structs::{PayoutDTO, BlockTemplate, Config, TransferResponse};
 
 async fn make_daemon_rpc_request(config: &Config, body: Value) -> Option<Value> {
-    return make_rpc_request(body, &config.daemon_rpc_url).await;
+    return make_rpc_request(body,
+                            &config.daemon_rpc_url,
+                            &config.daemon_rpc_user,
+                            &config.daemon_rpc_password).await;
 }
 
 async fn make_wallet_rpc_request(config: &Config, body: Value) -> Option<Value> {
-    return make_rpc_request(body, &config.wallet_rpc_url).await;
+    return make_rpc_request(body,
+                            &config.wallet_rpc_url,
+                            &config.wallet_rpc_user,
+                            &config.wallet_rpc_password).await;
 }
 
-async fn make_rpc_request(body: Value, uri: &String) -> Option<Value> {
-    let req_result = Request::builder()
-        .method(Method::POST)
-        .uri(uri)
-        .body(Body::from(body.to_string()));
-    if req_result.is_err() {
-        info!("could not make RPC request");
+async fn make_rpc_request(body: Value, uri: &String, username: &String, password: &String) -> Option<Value> {
+    let mut context = AuthContext::new(username, password, uri);
+    let client = Client::new();
+    let result = client.post(uri)
+        .body(body.to_string())
+        .send()
+        .await;
+    if result.is_ok() {
+        let response = result.ok().unwrap();
+        if response.status() == StatusCode::UNAUTHORIZED {
+            let resp_headers = response.headers();
+            println!("{:?}", resp_headers);
+        } else {
+            info!("could not make RPC request");
+            return None;
+        }
+    } else {
+        info!("RPC call failed with error: {}", result.err().unwrap().to_string());
         return None;
     }
-    let req = req_result.unwrap();
-    let response_result = Client::new().request(req).await;
-    if response_result.is_err() {
-        info!("RPC response error");
-        return None;
-    }
-    let response = response_result.unwrap();
-    let (parts, body) = response.into_parts();
-    if parts.status != StatusCode::OK {
-        info!("RPC status code: {}", parts.status);
-        return None;
-    }
-    let bytes_result = to_bytes(body).await;
-    if bytes_result.is_err() {
-        info!("could not parse RPC response body to bytes");
-        return None;
-    }
-    let str_result = String::from_utf8(bytes_result.unwrap().to_vec());
-    if str_result.is_err() {
-        info!("could not parse RPC response body to string");
-        return None;
-    }
-    let val_result = from_str(str_result.unwrap().as_str());
-    if val_result.is_err() {
-        info!("could not parse RPC response body to value");
-        return None;
-    }
-    return Some(val_result.unwrap());
+    return Some(json!({}));
 }
 
 pub async fn get_latest_block_template(config: &Config) -> Option<BlockTemplate> {

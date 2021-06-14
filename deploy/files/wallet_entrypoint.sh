@@ -11,7 +11,7 @@ gosu "${MONERO_USER}" monero-wallet-rpc \
   --rpc-bind-ip "0.0.0.0" \
   --rpc-bind-port 18082 \
   --confirm-external-bind \
-  --rpc-login "${MONERO_WALLET_RPC_USER:?UNSET}:${MONERO_WALLET_RPC_PASSWORD:?UNSET}" \
+  --rpc-login "${RUSTPOOL_WALLET_RPC_USER:?UNSET}:${RUSTPOOL_WALLET_RPC_PASSWORD:?UNSET}" \
   --daemon-address "monero-daemon:18081" \
-  --daemon-login "${MONERO_DAEMON_RPC_USER:?UNSET}:${MONERO_DAEMON_RPC_PASSWORD:?UNSET}" \
+  --daemon-login "${RUSTPOOL_DAEMON_RPC_USER:?UNSET}:${RUSTPOOL_DAEMON_RPC_PASSWORD:?UNSET}" \
   --trusted-daemon

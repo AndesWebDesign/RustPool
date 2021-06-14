@@ -3,7 +3,7 @@ FROM debian:bullseye-slim AS rustpool-build
 COPY src /rustpool/src
 COPY Cargo.toml /rustpool/Cargo.toml
 
-ENV RUST_BACKTRACE=1
+ENV RUST_BACKTRACE=full
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
@@ -24,11 +24,11 @@ RUN apt-get update \
 FROM debian:bullseye-slim AS rustpool
 
 COPY --from=rustpool-build /rustpool/target/release/rustpool /usr/local/bin/rustpool
-COPY deploy/files/config.json /etc/rustpool/config.json
 COPY deploy/files/rustpool_entrypoint.sh /rustpool_entrypoint.sh
 COPY deploy/files/wait_for_daemon.sh /wait_for_daemon.sh
+COPY deploy/files/wait_for_database.sh /wait_for_database.sh
 
-ENV RUST_BACKTRACE=1
+ENV RUST_BACKTRACE=full
 ENV RUSTPOOL_USER=rustpool_user
 ENV MONERO_DAEMON_RPC_USER=MISSING
 ENV MONERO_DAEMON_RPC_PASSWORD=MISSING
@@ -38,8 +38,12 @@ ENV MONERO_WALLET_RPC_PASSWORD=MISSING
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         gosu \
+        curl \
+        jq \
+        postgresql-client \
     && chmod +x /usr/local/bin/rustpool \
     && chmod +x /wait_for_daemon.sh \
+    && chmod +x /wait_for_database.sh \
     && chmod +x /rustpool_entrypoint.sh \
     && adduser --disabled-login --disabled-password --shell /bin/false ${RUSTPOOL_USER} \
     && apt-get -y clean \
@@ -52,9 +56,7 @@ RUN apt-get update \
 
 VOLUME /etc/rustpool
 
-EXPOSE 443
-
-ENTRYPOINT ["rustpool_entrypoint.sh"]
+ENTRYPOINT ["/rustpool_entrypoint.sh"]
 
 
 FROM debian:bullseye-slim AS monero-build
@@ -100,9 +102,6 @@ RUN apt-get update \
     && unset MONERO_DAEMON_RPC_PASSWORD
 
 VOLUME /monero_data
-VOLUME /home/${MONERO_USER}/.bitmonero
-
-EXPOSE 18081
 
 ENTRYPOINT ["/daemon_entrypoint.sh"]
 
@@ -144,7 +143,5 @@ RUN apt-get update \
 	&& unset POOL_WALLET_PASSWORD
 
 VOLUME /wallet_data
-
-EXPOSE 18082
 
 ENTRYPOINT ["/wallet_entrypoint.sh"]
